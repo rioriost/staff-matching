@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1800" viewBox="0 0 1720 1800" role="img" aria-labelledby="title desc">
+  <title id="title">候補検索、通勤推定、スコア計算、制約付き割当最適化の流れ</title>
+  <desc id="desc">管理企業ごとに求人を選択し、FastAPIが計算依頼をDBに保存する。PythonワーカーはJSONBの必須条件とpgvectorの距離で候補を絞り、OSM由来のファイルを探索して通勤時間を推定する。五つの適合度を平均し、OR-Tools CP-SATが募集人数、勤務重複、既存配置、固定候補の制約の下で、充足枠数を第一優先、総合点合計を第二優先として推薦する。未充足なら候補を40人から最大80人へ増やす。最適性は探索済み候補だけに対するもの。担当者は他の適格候補も選べる。AGEや自然言語AIは現行SaaSの最適化には使わない。</desc>
+  <defs>
+    <style>
+      text { font-family: "Hiragino Sans", "Noto Sans CJK JP", "Yu Gothic", sans-serif; fill: #172b43; font-size: 21px; }
+      .title { font-size: 36px; font-weight: 700; }
+      .heading { font-size: 25px; font-weight: 700; }
+      .label { font-size: 22px; font-weight: 700; }
+      .small { font-size: 18px; fill: #475569; }
+      .blue { fill: #1255a5; }
+      .teal { fill: #086c65; }
+      .purple { fill: #653ca0; }
+      .ochre { fill: #8a4a09; }
+      .card { fill: #fff; stroke: #bdc9d8; stroke-width: 1.5; }
+      .arrow { fill: none; stroke: #52677f; stroke-width: 2.5; marker-end: url(#arrow); }
+      .rule { stroke: #cbd5e1; stroke-width: 1; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#52677f"/>
+    </marker>
+  </defs>
+  <rect width="1720" height="1800" fill="#f4f7fb"/>
+  <text class="title" x="48" y="65">「候補を探す」と「全体の割当を決める」は別の処理</text>
+  <text class="small" x="48" y="104">staff-matching｜現行SaaS sparse-structural-v1 / 2026-10-07｜入力：同じ管理企業の求人・人材・既存配置・固定候補</text>
+
+  <g data-card="request">
+    <rect x="48" y="138" width="1624" height="90" rx="12" fill="#eef5ff" stroke="#1255a5" stroke-width="1.5"/>
+    <text class="label blue" x="72" y="173">管理企業が実行｜React → FastAPI → PostgreSQLの runs / dispatch → Pythonワーカー</text>
+    <text x="72" y="207">選択した求人、または全募集中求人を対象に非同期実行。同一テナントの同時計算は1件。別の管理企業の人材とは混ぜない。</text>
+  </g>
+  <path class="arrow" d="M 516 237 V 266"/>
+
+  <g data-card="retrieval">
+    <rect class="card" x="48" y="280" width="936" height="168" rx="12"/>
+    <text class="heading blue" x="72" y="320">① 候補検索｜PostgreSQL + JSONB + pgvector</text>
+    <text x="72" y="358">求人と人材の給与・期間・必須スキル・確認済み資格をSQLで照合</text>
+    <text x="72" y="392">ベクトルのL2距離 → PostGISの地理距離 → IDの順に取得</text>
+    <text class="small" x="72" y="427">経験・勤務時間も照合して、まず最大40人 / 求人。氏名は順位や適格性に使わない。</text>
+  </g>
+  <path class="arrow" d="M 516 458 V 480"/>
+  <g data-card="commute-filter">
+    <rect class="card" x="48" y="494" width="936" height="170" rx="12"/>
+    <text class="heading ochre" x="72" y="534">② 必須条件・通勤を判定｜Python</text>
+    <text x="72" y="572">資格期限、経験月数、契約期間、曜日・時刻、既存配置との重複を確認</text>
+    <text x="72" y="606">通勤は片道3時間未満、かつ本人の上限以内。車は運転資格・駐車場が必要</text>
+    <text class="small" x="72" y="643">経路不明・到達不能・条件違反は割当対象外。点数が高くても必須条件は越えられない。</text>
+  </g>
+  <path class="arrow" d="M 1068 562 H 997"/>
+  <g data-card="routing">
+    <rect x="1080" y="280" width="592" height="384" rx="12" fill="#fff7ec" stroke="#8a4a09" stroke-width="1.5"/>
+    <text class="heading ochre" x="1104" y="320">通勤時間の出所：DB外の経路ファイル</text>
+    <text x="1104" y="360">OSM由来 network.json.gz</text>
+    <text x="1104" y="394">道路ノード・徒歩 / 車の辺・駅・鉄道の辺</text>
+    <text x="1104" y="428">＋ 一方通行・右左折制限・概算所要秒数</text>
+    <path class="arrow" d="M 1380 441 V 463"/>
+    <text class="label" x="1104" y="499">Pythonの最短経路探索（Dijkstra型）</text>
+    <text x="1104" y="537">往復の遅い方向を採用し、手段間で短い方を選択</text>
+    <text class="small" x="1104" y="577">PostGISの距離をそのまま通勤時間にはしない。</text>
+    <text class="small" x="1104" y="604">pgRouting / AGE / 外部経路APIは使っていない。</text>
+    <text class="small" x="1104" y="631">収録範囲のみ。実時刻表・運休・渋滞は未反映。</text>
+  </g>
+
+  <path class="arrow" d="M 516 674 V 696"/>
+  <g data-card="scoring">
+    <rect class="card" x="48" y="710" width="936" height="170" rx="12"/>
+    <text class="heading teal" x="72" y="750">③ ペアごとの適合度を計算｜Pythonの明示的なルール</text>
+    <text x="72" y="788">スキル・資格・希望・通勤・職歴を0〜100点で表示</text>
+    <text x="72" y="822">総合点 ＝ 値がある項目の単純平均。職歴未確認は平均から除外。</text>
+    <text class="small" x="72" y="859">ベクトル距離を総合点には使わない。評価文の意味解析やLLMによる採点も行わない。</text>
+  </g>
+  <path class="arrow" d="M 1068 794 H 997"/>
+  <g data-card="score-detail">
+    <rect x="1080" y="710" width="592" height="456" rx="12" fill="#eef9f6" stroke="#086c65" stroke-width="1.5"/>
+    <text class="heading teal" x="1104" y="750">5軸の点数は何を見ているか</text>
+    <text class="label" x="1104" y="791">スキル</text>
+    <text class="small" x="1225" y="791">要件ごとに min(100, 保有 / 必須 × 80)</text>
+    <text class="small" x="1225" y="817">その平均。必須スキルがなければ100点。</text>
+    <path class="rule" d="M 1104 833 H 1648"/>
+    <text class="label" x="1104" y="864">資格</text>
+    <text class="small" x="1225" y="864">80 + 20 × 歓迎資格の充足率</text>
+    <text class="small" x="1225" y="890">歓迎資格がなければ100点。</text>
+    <path class="rule" d="M 1104 906 H 1648"/>
+    <text class="label" x="1104" y="937">希望</text>
+    <text class="small" x="1225" y="937">希望職種に含まれる＝100、それ以外＝50</text>
+    <path class="rule" d="M 1104 953 H 1648"/>
+    <text class="label" x="1104" y="984">通勤</text>
+    <text class="small" x="1225" y="984">max(0, 100 × (1 − 秒数 / 10,800))</text>
+    <path class="rule" d="M 1104 1000 H 1648"/>
+    <text class="label" x="1104" y="1031">職歴</text>
+    <text class="small" x="1225" y="1031">同職種・直近1,095日以内の有効な評価</text>
+    <text class="small" x="1225" y="1057">数値1〜5を20倍して平均。なければnull。</text>
+    <path class="rule" d="M 1104 1075 H 1648"/>
+    <text class="small" x="1104" y="1104">JSONBの評価日・職種・scoreを使用。評価文章は根拠表示。</text>
+    <text class="small" x="1104" y="1131">基準日は今日と求人開始日の早い方。未来の評価は除外。</text>
+  </g>
+
+  <path class="arrow" d="M 516 890 V 912"/>
+  <g data-card="solver">
+    <rect x="48" y="926" width="936" height="240" rx="12" fill="#f5f1fb" stroke="#653ca0" stroke-width="1.5"/>
+    <text class="heading purple" x="72" y="967">④ 求人をまたいで割当を最適化｜OR-Tools CP-SAT</text>
+    <text x="72" y="1005">適格な人材×求人に「割り当てる / 割り当てない」の0/1変数を置く</text>
+    <text x="72" y="1039">制約：募集人数、勤務時間の重複、既存配置、担当者の固定候補</text>
+    <text class="label purple" x="72" y="1075">第1優先：充足する枠数を最大化　　第2優先：総合点の合計を最大化</text>
+    <text class="small" x="72" y="1114">未充足の求人は①で最大80人まで追加探索し、②③を経て再計算。</text>
+    <text class="small" x="72" y="1141">候補の順位付けだけでなく、同じ人を重なる仕事へ二重に推薦しない組合せを探す。</text>
+  </g>
+
+  <path class="arrow" d="M 516 1176 V 1198"/>
+  <g data-card="result">
+    <rect class="card" x="48" y="1212" width="936" height="228" rx="12"/>
+    <text class="heading blue" x="72" y="1253">⑤ 結果を保存 → 比較 → 担当者が選択</text>
+    <text x="72" y="1291">candidates：点数・理由・経路・推薦　／　runs：状態・探索範囲・上界</text>
+    <text x="72" y="1325">WebUIはレーダーチャートと数値で表示。推薦外の適格候補も選べる。</text>
+    <text class="small" x="72" y="1364">入力の変更を検出した計算結果は公開せず、選択・配置時にも条件と版数を再確認。</text>
+    <text class="small" x="72" y="1391">推薦は採用確定ではない。紹介・模擬本人承諾を経て配置へ進む。</text>
+    <text class="small" x="72" y="1418">職業紹介は面接へ進めるが、通常派遣の募集企業による事前選考・面接は拒否。</text>
+  </g>
+  <g data-card="limits">
+    <rect x="1080" y="1212" width="592" height="228" rx="12" fill="#f1f4f8" stroke="#64748b" stroke-width="1.5"/>
+    <text class="heading" x="1104" y="1253">最適化の範囲と限界</text>
+    <text x="1104" y="1291">経路評価：最大80,000ペア / 実行</text>
+    <text x="1104" y="1325">CP-SAT：10秒 / 回、最大2回</text>
+    <text class="small" x="1104" y="1364">OPTIMALでも「探索した候補の範囲」での最適解。</text>
+    <text class="small" x="1104" y="1391">FEASIBLEは実行可能解。全組合せの最適性は未保証。</text>
+    <text class="small" x="1104" y="1418">外部AI・AGEはこのSaaS計算では使用しない。</text>
+  </g>
+
+  <g data-card="example">
+    <rect x="48" y="1482" width="1624" height="230" rx="12" fill="#fff" stroke="#7488a1" stroke-width="1.5"/>
+    <text class="heading" x="72" y="1524">小さな例：求人ごとの最高点を取るだけでは、全体が埋まらない</text>
+    <text class="small" x="72" y="1554">説明用の仮の点数。求人A・Bは同じ時間帯、各1人募集。Xを両方に割り当てることはできない。</text>
+    <rect x="72" y="1576" width="440" height="112" rx="8" fill="#eef5ff"/>
+    <text class="label" x="94" y="1605">候補</text>
+    <text class="label" x="235" y="1605">求人A</text>
+    <text class="label" x="376" y="1605">求人B</text>
+    <text x="94" y="1640">人材X</text><text x="249" y="1640">90</text><text x="388" y="1640">89</text>
+    <text x="94" y="1674">人材Y</text><text x="249" y="1674">88</text><text x="376" y="1674">不適格</text>
+    <text class="label" x="560" y="1605">求人Aから最高点を選ぶと</text>
+    <text x="560" y="1641">X → A：90点 ／ B：未充足</text>
+    <text class="small" x="560" y="1677">1枠だけ充足</text>
+    <path class="arrow" d="M 967 1639 H 1072"/>
+    <text class="label purple" x="1112" y="1605">組合せを最適化すると</text>
+    <text x="1112" y="1641">Y → A：88点 ＋ X → B：89点</text>
+    <text class="label purple" x="1112" y="1677">2枠を充足・合計177点</text>
+  </g>
+  <text class="small" x="48" y="1764">図1の対応：通常列＝依頼・状態・配置制約、JSONB＝条件と評価、pgvector＝①の並べ替え、PostGIS＝位置、AGE＝旧PoCのみ。</text>
+</svg>

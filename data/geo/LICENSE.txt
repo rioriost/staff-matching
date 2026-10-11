@@ -1,0 +1,36 @@
+Public geography reference data
+===============================
+
+Copyright and attribution: © OpenStreetMap contributors
+https://www.openstreetmap.org/copyright
+
+The OpenStreetMap source database and the derived public road/rail network
+and geographic FeatureCollection in this directory are made available under
+the Open Data Commons Open Database License, version 1.0 (ODbL-1.0).
+
+License and legal terms:
+https://opendatacommons.org/licenses/odbl/1-0/
+
+You may copy, distribute, transmit and adapt this database under that license.
+Credit OpenStreetMap and its contributors, identify the ODbL license, and
+comply with its share-alike and derivative-database availability requirements.
+This notice is a summary, not a replacement for the full legal terms.
+
+The public derived database is network.json.gz. It is available at:
+/assets/geography/network.json.gz
+
+The corresponding approximate public map is basemap.geojson. The manifest.json
+file records source URLs, extraction queries, snapshot dates, SHA-256 checksums,
+coverage, derivation versions, assumptions and known missing connections.
+The routing-only sanitized OSM source is retained under source/ for offline
+rebuilding. Business names, operators, brands, contacts, address tags, free-text
+notes and contributor metadata are removed. Only routing tags, topology and
+route-stop names are retained; this extract is not the unmodified OSM database.
+
+No generated person, employer, worksite, address, contact or employment-history
+records are included in these public reference assets. References to real
+streets and stations do not assert occupancy of any real building.
+
+Data is provided without warranty. Station entrances, train times, live service,
+road closures, traffic and accessibility are not certified by this demonstration.
+This notice applies to the public reference geography, not to application code.

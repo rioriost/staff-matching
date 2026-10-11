@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "source_version": "osm-kanto-corridors-20261006-v1",
+  "retrieved_at": "2026-10-06T03:26:14.520649+00:00",
+  "osm_timestamp": "2026-10-06T03:09:03Z",
+  "source_urls": [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter"
+  ],
+  "queries": [
+    "[out:json][timeout:90][maxsize:268435456];\nrelation(id:5195691,5195692,3351488,10312043)->.routes;\nway(r.routes)(35.43,139.55,35.92,140.04)->.rail;\nnode[railway=station][name~\"^(大宮|浦和|川口|赤羽|上野|秋葉原|神田|東京|品川|蒲田|川崎|鶴見|横浜|錦糸町|新小岩|市川|西船橋|船橋)$\"](35.43,139.55,35.92,140.04)->.stations;\n(.rail;.stations;node(r.routes)(35.43,139.55,35.92,140.04););\n(._;>;);\nout body;\n.routes out body;\n",
+    "[out:json][timeout:90][maxsize:268435456];\nway[highway~\"^(trunk|primary)(_link)?$\"](35.43,139.55,35.92,140.04)->.roads;\nrelation(bw.roads)[type=restriction]->.restrictions;\n(.roads;>;);\nout body;\n.restrictions out body;\n",
+    "[out:json][timeout:90][maxsize:268435456];\nnode[railway=station][name~\"^(大宮|浦和|川口|赤羽|上野|秋葉原)$\"](35.43,139.55,35.92,140.04);\nway(around:550)[highway][area!=yes]->.roads;\nrelation(bw.roads)[type=restriction]->.restrictions;\n(.roads;>;);\nout body;\n.restrictions out body;\n",
+    "[out:json][timeout:90][maxsize:268435456];\nnode[railway=station][name~\"^(神田|東京|品川|蒲田|川崎|鶴見)$\"](35.43,139.55,35.92,140.04);\nway(around:550)[highway][area!=yes]->.roads;\nrelation(bw.roads)[type=restriction]->.restrictions;\n(.roads;>;);\nout body;\n.restrictions out body;\n",
+    "[out:json][timeout:90][maxsize:268435456];\nnode[railway=station][name~\"^(横浜|錦糸町|新小岩|市川|西船橋|船橋)$\"](35.43,139.55,35.92,140.04);\nway(around:550)[highway][area!=yes]->.roads;\nrelation(bw.roads)[type=restriction]->.restrictions;\n(.roads;>;);\nout body;\n.restrictions out body;\n",
+    "[out:json][timeout:90][maxsize:268435456];\nnode[railway=station][name~\"^(東神奈川|桜木町|本八幡|下総中山|東船橋|南浦和)$\"](35.43,139.55,35.92,140.04);\nway(around:550)[highway][area!=yes]->.roads;\nrelation(bw.roads)[type=restriction]->.restrictions;\n(.roads;>;);\nout body;\n.restrictions out body;\n",
+    "[out:json][timeout:90][maxsize:268435456];\nnode[railway=station][name~\"^(北浦和|さいたま新都心)$\"](35.43,139.55,35.92,140.04);\nway(around:550)[highway][area!=yes]->.roads;\nrelation(bw.roads)[type=restriction]->.restrictions;\n(.roads;>;);\nout body;\n.restrictions out body;\n"
+  ],
+  "part_osm_timestamps": [
+    "2026-10-06T03:09:03Z",
+    "2026-10-06T03:09:03Z",
+    "2026-10-06T03:09:03Z",
+    "2026-05-31T22:37:44Z",
+    "2026-10-06T03:11:05Z",
+    "2026-10-06T03:14:11Z",
+    "2026-10-06T03:15:12Z"
+  ],
+  "bbox_south_west_north_east": [
+    35.43,
+    139.55,
+    35.92,
+    140.04
+  ],
+  "station_access_radius_m": 550,
+  "route_relation_ids": [
+    5195691,
+    5195692,
+    3351488,
+    10312043
+  ],
+  "source_file": "source/osm-kanto-source.json.gz",
+  "source_sha256": "3be457540ba270caf3709ff584ffb8454506c3c807f50d00d449f632ab58fe1d",
+  "uncompressed_sha256": "a089674fc7882e26d3890166a093109e1a52e8b3fb72667b6de48273091d691c",
+  "license": "ODbL-1.0",
+  "license_url": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "attribution": "© OpenStreetMap contributors",
+  "attribution_url": "https://www.openstreetmap.org/copyright",
+  "description": "京浜東北線・中央総武緩行線の実在線路、主要道路、選定駅550m圏の道路。範囲外・未収録道路・時刻表は対象外。実在の建物への入居を示さない。",
+  "network_version": "osm-kanto-corridors-20261006-v1-graph-v1",
+  "assumptions_version": "commute-conservative-20261006-v1",
+  "graph_file": "network.json.gz",
+  "graph_sha256": "d749b74330c1311f3bdb0bc1973eb715b7b7349abe9b90000695bfaf47b3f432",
+  "graph_license": "ODbL-1.0",
+  "graph_counts": {
+    "nodes": 153388,
+    "directed_walk_edges": 255982,
+    "directed_car_edges": 170033,
+    "rail_segments": 139,
+    "stations": 71,
+    "missing_rail_segments": 1,
+    "turn_restrictions": 1006
+  },
+  "known_missing_rail_segments": [
+    {
+      "relation_id": 3351488,
+      "from": "水道橋",
+      "to": "飯田橋"
+    }
+  ],
+  "assumptions": {
+    "walking_m_per_second": 1.2,
+    "rail_m_per_second": 11.11,
+    "rail_stop_allowance_seconds": 35,
+    "initial_wait_seconds": 300,
+    "transfer_seconds": 480,
+    "station_entry_allowance_seconds": 180,
+    "station_access_snap_max_metres": 180,
+    "road_endpoint_snap_max_metres": 2,
+    "car_urban_kmh": 25,
+    "car_primary_kmh": 35,
+    "car_parking_allowance_seconds": 300,
+    "transit_supported_local_minutes": [
+      360,
+      1320
+    ],
+    "maximum_walk_to_station_seconds": 2400
+  },
+  "limitations": [
+    "OSM is incomplete; only downloaded connected topology is used; no gap-filling edges.",
+    "Rail directions follow ordered route-relation stops; no train timetable or live service.",
+    "Station entry is a labelled estimate from a public walk node within 180m, not a surveyed entrance, accessible entrance guarantee, or invented road geometry.",
+    "Transfers only between retained services at the same named station; no interstation jumps.",
+    "Conditional access and unsupported via-way/conditional turn restrictions are excluded conservatively; some possible real car routes are therefore unavailable.",
+    "Driving speeds and dwell/wait/parking are conservative assumptions, not traffic predictions.",
+    "Transit is unknown when either commute direction falls outside 06:00–22:00.",
+    "Fictional sites and homes use public road nodes; no actual building occupancy is asserted."
+  ],
+  "job_field_sources": [
+    {
+      "url": "https://www.hellowork.mhlw.go.jp/enterprise/job_offer01.html",
+      "accessed": "2026-10-06",
+      "use": "求人申込み・紹介・応募手続きの項目参考。求人広告の転載・収集なし。"
+    },
+    {
+      "url": "https://www.mhlw.go.jp/content/11600000/001188638.pdf",
+      "accessed": "2026-10-06",
+      "sha256": "8789b1eab7aadc09821de101dda8d21076d447f040f1e8f5981312546329d6ea",
+      "use": "業務・就業場所の変更範囲、契約更新基準・更新上限の項目参考。"
+    }
+  ],
+  "bbox": [
+    139.55,
+    35.43,
+    140.04,
+    35.92
+  ],
+  "coverage": {
+    "bbox": [
+      139.55,
+      35.43,
+      140.04,
+      35.92
+    ],
+    "description": "京浜東北線・中央総武緩行線の実在線路、主要道路、選定駅550m圏の道路。範囲外・未収録道路・時刻表は対象外。実在の建物への入居を示さない。",
+    "station_access_radius_m": 550,
+    "counts": {
+      "nodes": 153388,
+      "directed_walk_edges": 255982,
+      "directed_car_edges": 170033,
+      "rail_segments": 139,
+      "stations": 71,
+      "missing_rail_segments": 1,
+      "turn_restrictions": 1006
+    },
+    "known_missing_rail_segments": [
+      {
+        "relation_id": 3351488,
+        "from": "水道橋",
+        "to": "飯田橋"
+      }
+    ]
+  },
+  "public_files": [
+    "network.json.gz",
+    "basemap.geojson",
+    "manifest.json",
+    "LICENSE.txt"
+  ],
+  "assets": {
+    "network": {
+      "filename": "network.json.gz",
+      "url": "/assets/geography/network.json.gz",
+      "media_type": "application/gzip",
+      "sha256": "d749b74330c1311f3bdb0bc1973eb715b7b7349abe9b90000695bfaf47b3f432",
+      "bytes": 6823616
+    },
+    "basemap": {
+      "filename": "basemap.geojson",
+      "url": "/assets/geography/basemap.geojson",
+      "media_type": "application/geo+json",
+      "sha256": "b2b81a65cf2ba37f4b665436e70103ad7fd43d31e2b2e49304a8529298b1f105",
+      "bytes": 2537025
+    },
+    "manifest": {
+      "filename": "manifest.json",
+      "url": "/assets/geography/manifest.json",
+      "media_type": "application/json"
+    },
+    "license": {
+      "filename": "LICENSE.txt",
+      "url": "/assets/geography/LICENSE.txt",
+      "media_type": "text/plain; charset=utf-8",
+      "sha256": "f736bb2e825c83fb51651bca8ebfacadec211772c74fa09fa776cc9e98ee39a4",
+      "bytes": 1876
+    }
+  },
+  "source_distribution": "The routing-only sanitized OSM source is retained for offline rebuilding under source/. Business names, contacts, addresses and contributor metadata are excluded; only route-stop names and routing tags are retained. The public ODbL derivative is network.json.gz; it contains no generated records.",
+  "source_privacy_policy": "routing-only-v1"
+}

@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="1576" viewBox="0 0 1720 1576" role="img" aria-labelledby="title desc">
+  <title id="title">staff-matching のデータ構造と各技術の役割</title>
+  <desc id="desc">現行SaaSは同じPostgreSQLの行に通常の列、JSONB、pgvector、PostGISの位置情報を保存する。通常の列は識別子と業務状態、JSONBは求人条件・人材プロフィール・職歴評価、32次元ベクトルはスキル数値、PostGISは住所に対応する点を保持する。Apache AGEは旧PoC専用で、SQLの履歴正本をStaff、History、Orderのグラフに投影し、評価件数と平均を集計する。SaaSの職歴はAGEに同期されず、現在の最適化はAGEを呼び出さない。経路ネットワークはDB外のOSM由来ファイルである。</desc>
+  <defs>
+    <style>
+      text { font-family: "Hiragino Sans", "Noto Sans CJK JP", "Yu Gothic", sans-serif; fill: #172b43; font-size: 21px; }
+      .title { font-size: 36px; font-weight: 700; }
+      .heading { font-size: 25px; font-weight: 700; }
+      .label { font-size: 22px; font-weight: 700; }
+      .small { font-size: 18px; fill: #475569; }
+      .code { font-family: "SFMono-Regular", Menlo, monospace; font-size: 19px; }
+      .blue { fill: #1255a5; }
+      .teal { fill: #086c65; }
+      .purple { fill: #653ca0; }
+      .ochre { fill: #8a4a09; }
+      .card { fill: #fff; stroke: #bdc9d8; stroke-width: 1.5; }
+      .arrow { fill: none; stroke: #52677f; stroke-width: 2.5; marker-end: url(#arrow); }
+      .both { marker-start: url(#arrow); }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 Z" fill="#52677f"/>
+    </marker>
+  </defs>
+  <rect width="1720" height="1576" fill="#f4f7fb"/>
+  <text class="title" x="48" y="65">業務データは1つのPostgreSQLに集約し、用途ごとに型を使い分ける</text>
+  <text class="small" x="48" y="104">staff-matching｜マッチング実装 / 2026-10-07｜合成データ：10社 × 求人1,000件・人材1,000人</text>
+
+  <g data-card="web">
+    <rect class="card" x="48" y="140" width="424" height="126" rx="14"/>
+    <text class="heading" x="72" y="181">管理企業のWebUI</text>
+    <text x="72" y="217">React / TypeScript / Leaflet</text>
+    <text class="small" x="72" y="245">求人・候補比較・地図・担当者による選択</text>
+  </g>
+  <path class="arrow both" d="M 484 203 H 582"/>
+  <text class="small" x="505" y="183">HTTPS</text>
+  <g data-card="api">
+    <rect class="card" x="596" y="140" width="450" height="126" rx="14"/>
+    <text class="heading" x="620" y="181">FastAPI / Python</text>
+    <text x="620" y="217">認証・テナント境界・依頼受付・結果取得</text>
+    <text class="small" x="620" y="245">Azure Container Apps｜DBロール staff_app</text>
+  </g>
+  <g data-card="worker">
+    <rect class="card" x="1126" y="140" width="546" height="126" rx="14"/>
+    <text class="heading" x="1150" y="181">非同期の計算ワーカー / Python</text>
+    <text x="1150" y="217">候補検索 → 経路・スコア → OR-Tools</text>
+    <text class="small" x="1150" y="245">Azure Container Apps｜DBロール staff_worker</text>
+  </g>
+  <path class="arrow both" d="M 820 278 V 322"/>
+  <text class="small" x="562" y="309">SQL：業務データ・計算依頼</text>
+  <path class="arrow both" d="M 1410 278 V 322"/>
+  <text class="small" x="1128" y="309">SQL：依頼取得・結果保存</text>
+
+  <rect x="48" y="336" width="1624" height="1178" rx="18" fill="#fff" stroke="#7488a1" stroke-width="2"/>
+  <text class="heading" x="76" y="378">Azure Database for PostgreSQL Flexible Server｜データベース：staffmatching</text>
+  <text class="small" x="76" y="411">A〜Dは別のデータベースではなく、同じテーブルで併用する列・型・拡張。JSONBはPostgreSQL標準の型。</text>
+
+  <rect x="72" y="437" width="1576" height="640" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text class="label" x="96" y="474">現行SaaS：staff_saas</text>
+  <text class="small" x="501" y="474">業務テーブルを tenant_id + FORCE RLS + テナント付き外部キーで分離</text>
+
+  <g data-card="relational">
+    <rect x="96" y="498" width="738" height="226" rx="12" fill="#eef5ff" stroke="#1255a5" stroke-width="1.5"/>
+    <text class="heading blue" x="120" y="539">A｜通常の列・リレーショナルデータ</text>
+    <text x="120" y="578">tenant_id、id、company_id、site_id、version</text>
+    <text x="120" y="612">計算・紹介の状態、面接日時、確定配置の紐づけ</text>
+    <text x="120" y="646">主キー・外部キー・一意制約で整合性を維持</text>
+    <text class="small" x="120" y="683">例：runs.status = 'completed'、appointments.start_at</text>
+    <text class="small" x="120" y="707">面接の重複はDBの排他制約でも防止（GiST / btree_gist）</text>
+  </g>
+  <g data-card="jsonb">
+    <rect x="862" y="498" width="762" height="226" rx="12" fill="#eef9f6" stroke="#086c65" stroke-width="1.5"/>
+    <text class="heading teal" x="886" y="539">B｜JSONB：条件・プロフィール・評価・結果</text>
+    <text x="886" y="578">jobs.body：業務内容、賃金、シフト、必須スキル・資格</text>
+    <text x="886" y="612">people.summary：氏名、スキル、資格、就労・通勤希望</text>
+    <text x="886" y="646">people.history：職歴、評価日・文章・項目・数値・出典</text>
+    <text class="small" x="886" y="683">例：skills = {"表計算": 3}、評価 score = 4 / 5 または null</text>
+    <text class="small" x="886" y="707">candidates.body：点数・適格性・根拠・通勤概算・推薦フラグ</text>
+  </g>
+  <g data-card="vector">
+    <rect x="96" y="752" width="738" height="226" rx="12" fill="#f5f1fb" stroke="#653ca0" stroke-width="1.5"/>
+    <text class="heading purple" x="120" y="793">C｜pgvector：スキルから作る32次元数値列</text>
+    <text class="code" x="120" y="832">people.features / jobs.features : vector(32)</text>
+    <text x="120" y="866">スキル名をハッシュで次元に対応付け、レベルを加算</text>
+    <text x="120" y="900">人材と求人要件のL2距離（&lt;-&gt;）で候補を並べる</text>
+    <text class="small" x="120" y="937">学習済み埋め込み・文章の意味検索ではない。最終点とも別。</text>
+    <text class="small" x="120" y="961">現行SaaSにはHNSW / IVFFlat索引なし。必須スキルは別途照合。</text>
+  </g>
+  <g data-card="postgis">
+    <rect x="862" y="752" width="762" height="226" rx="12" fill="#fff7ec" stroke="#8a4a09" stroke-width="1.5"/>
+    <text class="heading ochre" x="886" y="793">D｜PostGIS：通勤計算の出発点・到着点</text>
+    <text x="886" y="832">people.private_location：非公開の自宅側の点</text>
+    <text x="886" y="866">sites.location：勤務先の点（詳細は sites.body にも格納）</text>
+    <text x="886" y="900">geography(Point, 4326) / GiST / ST_Distance</text>
+    <text class="small" x="886" y="937">地理距離はベクトル距離が同じ候補の並べ替えに使う。</text>
+    <text class="small" x="886" y="961">経路探索はDB外のOSMファイル + Pythonで実行（図2）。</text>
+  </g>
+  <g data-card="same-row">
+    <rect x="96" y="1003" width="1528" height="50" rx="8" fill="#e8eef5"/>
+    <text x="118" y="1035">同じ people の1行：A 識別子・版数・非公開連絡先 ＋ B summary / history ＋ C features ＋ D private_location</text>
+  </g>
+
+  <g data-card="identity">
+    <rect x="72" y="1095" width="1576" height="72" rx="10" fill="#f4f6f9" stroke="#bdc9d8"/>
+    <text class="label" x="96" y="1126">認証専用：staff_identity</text>
+    <text class="small" x="459" y="1126">users / memberships / sessions / credentials：ログインID、パスワードハッシュ、所属、セッション、パスキー公開鍵</text>
+    <text class="small" x="96" y="1153">パスキーの秘密鍵は保存しない。計算ワーカーから認証スキーマへのアクセスは不可。認証情報はマッチングに使わない。</text>
+  </g>
+
+  <rect x="72" y="1187" width="1576" height="303" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2" stroke-dasharray="8 6"/>
+  <text class="heading" x="96" y="1229">E｜Apache AGE：旧PoCの履歴グラフ（現行SaaSの計算経路には入らない）</text>
+  <g data-card="legacy-source">
+    <rect class="card" x="96" y="1254" width="350" height="170" rx="10"/>
+    <text class="label" x="116" y="1289">SQLの正本</text>
+    <text class="code" x="116" y="1320"><tspan x="116">staff_matching.</tspan><tspan x="116" dy="24">history_source</tspan></text>
+    <text class="small" x="116" y="1376">人材ID、求人ID、履歴ID、評価0〜1</text>
+    <text class="small" x="116" y="1404">由来は provenance（JSONB）</text>
+  </g>
+  <path class="arrow" d="M 458 1340 H 560"/>
+  <text class="small" x="465" y="1302">管理処理で</text>
+  <text class="small" x="483" y="1325">投影</text>
+  <g data-card="age-graph">
+    <rect class="card" x="576" y="1254" width="642" height="170" rx="10"/>
+    <text class="label" x="598" y="1289">AGEグラフ：テナント別 sm_&lt;hash&gt;</text>
+    <rect x="598" y="1330" width="112" height="48" rx="24" fill="#e8eef5"/>
+    <rect x="830" y="1330" width="120" height="48" rx="24" fill="#e8eef5"/>
+    <rect x="1090" y="1330" width="104" height="48" rx="24" fill="#e8eef5"/>
+    <text class="label" x="627" y="1361">Staff</text>
+    <text class="label" x="851" y="1361">History</text>
+    <text class="label" x="1110" y="1361">Order</text>
+    <path class="arrow" d="M 720 1354 H 819"/>
+    <path class="arrow" d="M 960 1354 H 1079"/>
+    <text class="small" x="716" y="1321">COMPLETED</text>
+    <text class="small" x="964" y="1321">FOR_ORDER</text>
+    <text class="small" x="598" y="1406">ノード＝人材・履歴・求人、履歴属性＝rating</text>
+  </g>
+  <path class="arrow" d="M 1230 1340 H 1320"/>
+  <text class="small" x="1237" y="1320">Cypher</text>
+  <g data-card="legacy-use">
+    <rect class="card" x="1336" y="1254" width="288" height="170" rx="10"/>
+    <text class="label" x="1356" y="1289">旧PoCの特徴量へ</text>
+    <text class="code" x="1356" y="1324">count(h)</text>
+    <text class="code" x="1356" y="1355">avg(h.rating)</text>
+    <text class="small" x="1356" y="1392">評価件数・平均評価</text>
+  </g>
+  <text class="small" x="96" y="1464">旧PoCは staff_matching.feature_evidence() 経由で参照。現行SaaSの people.history からAGEへの自動同期はない。</text>
+  <text class="small" x="48" y="1549">読み方：A＝識別・状態管理、B＝業務内容、C＝候補の距離順位、D＝位置、E＝旧PoCの関係・集計。破線は旧PoCの範囲。</text>
+</svg>

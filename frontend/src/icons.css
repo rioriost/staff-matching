@@ -1,0 +1,4 @@
+.ui-icon { display: inline-block; width: 1.2em; height: 1.2em; flex: 0 0 auto; vertical-align: -.22em; }
+button > .ui-icon { margin-inline-end: .45em; }
+.ui-heading { display: flex; gap: .5em; align-items: center; }
+.ui-heading > .ui-icon { flex-shrink: 0; }

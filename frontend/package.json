@@ -1,0 +1,32 @@
+{
+  "name": "staff-matching-local",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:auth-browser": "STAFF_AUTH_BROWSER_TESTS=1 node --experimental-strip-types --test tests/auth-browser.test.ts",
+    "test:saas-browser": "STAFF_SAAS_BROWSER_TESTS=1 node --experimental-strip-types --test tests/saas-browser.test.ts",
+    "test:saas-webkit": "STAFF_BROWSER=webkit npm run test:saas-browser",
+    "test:auth-webkit": "STAFF_BROWSER=webkit npm run test:auth-browser",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "^14.0.0",
+    "leaflet": "^1.9.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/leaflet": "^1.9.21",
+    "@types/react-dom": "^19.2.0",
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2"
+  }
+}
